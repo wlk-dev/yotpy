@@ -4,7 +4,7 @@ An easy-to-use Python wrapper for the Yotpo API. Developed to fill the gap of ex
 
 ## Installation
 
-Install yotpy using pip:
+Install `yotpy` using pip:
 
 ```bash
 pip install yotpy
