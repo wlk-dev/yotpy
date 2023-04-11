@@ -1,0 +1,25 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.flit.metadata]
+module = "yotpy"
+author = "William Koelling"
+author-email = "william.koelling@gmail.com"
+home-page = "https://github.com/wlk-dev/yotpy"
+license = "MIT"
+description-file = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.11",
+]
+requires = [
+    "aiohttp",
+    "requests",
+]
+keywords = "yotpo, api, wrapper, python, data, transformation, client, integration, review, ecommerce"
+
+[tool.flit.metadata.requires-extra]

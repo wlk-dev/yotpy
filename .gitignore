@@ -1,0 +1,22 @@
+# Distribution and wheel distribution files
+dist/
+build/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Other common files and directories to ignore
+.idea/
+*.egg-info/
+*.log
+*.bak
+.DS_Store
