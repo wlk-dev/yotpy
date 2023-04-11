@@ -6,10 +6,11 @@ __version__ = "0.0.1"
 
 import asyncio
 import aiohttp
+from json import loads as json_loads
 from csv import DictWriter
 from io import StringIO
 from requests import post as requests_post
-from typing import AsyncGenerator, Iterator, Union
+from typing import AsyncGenerator, Iterator, Union, Optional, Callable, Union
 from html import unescape
 from urllib.parse import urlencode
 from math import ceil
@@ -25,7 +26,8 @@ class UploadException(Exception):
 class SendException(Exception):
     pass
 
-
+class CustomException(Exception):
+    pass
 
 # TODO: Refactor naming for the below two classes
 class UserIdNotFound(Exception):
@@ -337,6 +339,14 @@ class YotpoAPIWrapper:
         self.write_user_endpoint = f"https://api-write.yotpo.com/users/me?utoken={self._utoken}"
         self.write_app_endpoint = f"https://api-write.yotpo.com/apps"
 
+        self.aiohttp_session = aiohttp.ClientSession()
+    
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.aiohttp_session.close()
+
     @staticmethod
     def _get_user_token(app_key: str, secret: str) -> str:
         """
@@ -365,6 +375,73 @@ class YotpoAPIWrapper:
 
         raise Exception(f"Error: {response.status_code} | {response.reason} - {url}")
 
+    async def _options_request(self, url: str, method: str) -> bool:
+        """
+        Asynchronously sends a preflight OPTIONS request to check if the given method is allowed for the given endpoint.
+
+        Args:
+            url (str): The API endpoint URL.
+
+        Returns:
+            bool: True if the method is allowed, False otherwise.
+        """
+        # Cheeky way to make sure `method` is at least syntactically correct.
+        if (method := method.upper()) not in ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']:
+            raise Exception("Invalid HTTP method: ", method)
+
+        async with self.aiohttp_session.options(url) as response:
+            if response.ok:
+                allowed_methods = response.headers.get("Allow", "")
+                return method in allowed_methods.split(", ")
+            raise Exception(f"Error: {response.status} {response.reason} - {url}")
+
+    async def _get_request(self, url: str, parser: Callable[[dict], dict] = json_loads, exception_type: Exception = CustomException, **kwargs) -> dict:
+        """
+        Asynchronously sends a GET request to the specified URL and parses the response using the provided parser.
+
+        Args:
+            session (aiohttp.ClientSession): An aiohttp client session for making requests.
+            url (str): The URL to send the request to.
+            parser (Callable[[dict], dict]): A function to parse the response JSON. Defaults to json.loads.
+            exception_type (Union[CustomException, Exception]): The type of exception to raise when an error occurs. Defaults to CustomException.
+            **kwargs: Additional keyword arguments to be passed to the request object.
+
+        Returns:
+            dict: The parsed JSON response.
+
+        Raises:
+            exception_type: If the response status is not 200, an instance of the specified exception_type is raised with an error message.
+        """
+        async with self.aiohttp_session.get(url, **kwargs) as response:
+            if response.status == 200:
+                return parser(await response.json())
+            raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
+
+    async def _post_request(self, url: str, data: dict, parser: Callable[[dict], dict] = json_loads, exception_type: Exception = CustomException, **kwargs) -> dict:
+        """
+        Asynchronously sends a POST request to the specified URL and parses the response using the provided parser.
+
+        Args:
+            session (aiohttp.ClientSession): An aiohttp client session for making requests.
+            url (str): The URL to send the request to.
+            data (dict): The data to send in the request body.
+            parser (Callable[[dict], dict]): A function to parse the response JSON. Defaults to json.loads.
+            exception_type (Union[CustomException, Exception]): The type of exception to raise when an error occurs. Defaults to CustomException.
+            **kwargs: Additional keyword arguments to be passed to the request object.
+
+        Returns:
+            dict: The parsed JSON response.
+
+        Raises:
+            exception_type: If the response status is not 200, an instance of the specified exception_type is raised with an error message.
+        """
+
+        async with self.aiohttp_session.post(url, data=data, **kwargs) as response:
+            if response.status == 200:
+                return parser(await response.json())
+            raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
+
+
     async def _pages(self, endpoint: str, start_page: int = 1) -> AsyncGenerator[tuple[str, int], None]:
         """
         Asynchronously generate URLs for each page of results.
@@ -382,66 +459,6 @@ class YotpoAPIWrapper:
         is_widget = "widget" in endpoint
         for num in range(start_page, last_page + 1):
             yield endpoint + urlencode(({("per_page" if is_widget else "count"): 100, "page": num})), num
-
-    # TODO: The use of this method is deprecated. Functionality will be replaced `get_total_reviews`. Possible refactor of this method for better abstractions.
-    # NOTE: Keep for reference until major refactoring is complete.
-    # Use of this function is discouraged. `get_total_reviews` is just better all on metrics.
-    async def get_total_pages(self) -> int:
-        """
-        Asynchronously get the total number of pages of results.
-
-        Returns:
-            int: The total number of pages.
-        """
-        url = self.widget_endpoint + urlencode({"per_page": 1, "page": 1})
-        async with aiohttp.request("GET", url) as response:
-            if response.ok:
-                pagination = (await response.json())['response']['pagination']
-                return ceil(pagination['total'] / 100)
-
-            raise Exception(
-                f"Error: {response.status} {response.reason} - {url}")
-    
-    async def get_total_reviews(self) -> int:
-        """
-        Asynchronously fetches the total number of reviews for an app.
-
-        This method first retrieves the user and their user ID, then fetches the app data
-        associated with that user. Finally, it returns the total number of reviews for the app.
-
-        Returns:
-            int: The total number of reviews for the app.
-
-        Raises:
-            UserIdNotFound: If unable to get the user ID.
-            AppDataNotFound: If unable to get the app data.
-        """
-        if user_id := (await self.get_user()).get("id") is None:
-            raise UserIdNotFound("Error: Unable to get user id.")
-
-        app = await self.get_app(user_id)
-
-        return app['data_for_events']['total_reviews']
- 
-    async def _preflight_request(self, url: str, method : str) -> bool:
-        """
-        Asynchronously sends a preflight OPTIONS request to check if the given method is allowed for the given endpoint.
-
-        Args:
-            url (str): The API endpoint URL.
-
-        Returns:
-            bool: True if the method is allowed, False otherwise.
-        """
-        # Cheeky way to make sure `method` is at least syntactically correct.
-        if (method := method.upper()) not in ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']:
-            raise Exception("Invalid HTTP method: ", method)
-
-        async with aiohttp.request(method, url) as response:
-            if response.ok:
-                allowed_methods = response.headers.get("Allow", "")
-                return "POST" in allowed_methods.split(", ")
-            raise Exception(f"Error: {response.status} {response.reason} - {url}")
 
     async def get_user(self) -> dict:
         """
@@ -469,10 +486,7 @@ class YotpoAPIWrapper:
         """
         url = self.write_user_endpoint
         
-        async with aiohttp.request("GET", url) as response:
-            if response.ok:
-                return (await response.json())['response']['user']
-            raise Exception(f"Error: {response.status} | {response.reason} - {url}")
+        await self._get_request(url, parser=lambda data: data['response']['user'])
 
     async def get_app(self, user_id: str | int) -> dict:
         """
@@ -499,19 +513,41 @@ class YotpoAPIWrapper:
 
         url = f"https://api-write.yotpo.com/apps/{self._app_key}?user_id={user_id}&utoken={self._utoken}"
 
-        async with aiohttp.request("GET", url) as response:
-            if response.ok:
-                return (await response.json())['response']['app']
-            raise AppDataNotFound(f"Error: {response.status} | {response.reason} - {url}")
-        
-    async def fetch(self, session: aiohttp.ClientSession, url: str, page_num : int) -> list[dict]:
+        await self._get_request(url, parser=lambda data: data['response']['app'], exception_type=AppDataNotFound)
+
+    async def get_total_reviews(self) -> int:
         """
-        Asynchronously fetch the contents of a URL.
+        Asynchronously fetches the total number of reviews for an app.
+
+        This method first retrieves the user and their user ID, then fetches the app data
+        associated with that user. Finally, it returns the total number of reviews for the app.
+
+        Returns:
+            int: The total number of reviews for the app.
+
+        Raises:
+            UserIdNotFound: If unable to get the user ID.
+            AppDataNotFound: If unable to get the app data.
+        """
+        if user_id := (await self.get_user()).get("id") is None:
+            raise UserIdNotFound("Error: Unable to get user id.")
+
+        app = await self.get_app(user_id)
+
+        return app['data_for_events']['total_reviews']
+    
+    async def get_templates(self) -> dict:
+        user_id = (await self.get_user())['id']
+        app = await self.get_app(user_id)
+        templates = app['account_emails']
+        return templates
+        
+    async def fetch_review_page(self, url: str) -> list[dict]:
+        """
+        Asynchronously fetch the contents of a review URL.
 
         Args:
-            session (aiohttp.ClientSession): The aiohttp client session to use for the request.
             url (str): The URL to fetch.
-            page_num (int): For tracking purposes.
 
         Returns:
             list[dict]: A list of reviews.
@@ -519,28 +555,15 @@ class YotpoAPIWrapper:
         Raises:
             Exception: If the response status is not 200.
         """
-        # TODO: Generalize this, so that it can be used for other endpoints.
-        # TODO: Add return parser function as an argument.
-        print(f"Fetching URL: {url}")
         is_widget = "widget" in url
-        # TODO: remove "page_number" metadata from reviews.
-        # It's use is now deprecated. Remove when convenient.
-        async with session.get(url) as response:
-            if response.status == 200:
-                json = await response.json()
-                page = json['response']['reviews'] if is_widget else json['reviews']
-                return [dict(review, **{"page_number": page_num}) for review in page]
+        self._get_request(url, parser=lambda data: data['response']['reviews'] if is_widget else data['reviews'])
 
-            raise Exception(
-                f"Error: {response.status} {response.reason} - {url}")
-
-    async def batch_fetch(self, endpoint: str, start_page : int = 1) -> list[dict]:
+    async def fetch_all_reviews(self, endpoint: str) -> list[dict]:
         """
-        Asynchronously fetch all pages of results for an API endpoint.
+        Asynchronously fetch all the reviews of a given review endpoint.
 
         Args:
             endpoint (str): The API endpoint to query.
-            start_page (int): The first page to generate.
 
         Returns:
             list: A list of response json and an integer indicating the number of pages queried.
@@ -548,45 +571,20 @@ class YotpoAPIWrapper:
         Raises:
             Exception: If any response status is not 200.
         """
-        async with aiohttp.ClientSession() as session:
-            tasks = []
-            async for url, num in self._pages(endpoint, start_page):
-                task = asyncio.create_task(self.fetch(session, url, num))
-                tasks.append(task)
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            if any([isinstance(result, Exception) for result in results]):
-                raise Exception("One or more requests failed.")
-            else:
-                # Flatten the list of lists into one big list using itertools.chain
-                results = list(chain.from_iterable(results))
-                return results
+        
+        review_requests = []
+        async for url, _ in self._pages(endpoint):
+            task = asyncio.create_task(self.fetch_review_page(url))
+            review_requests.append(task)
+        
+        results = await asyncio.gather(*review_requests, return_exceptions=True)
 
-    async def _post_request(self, session, url, data, as_form_data=False):
-        """
-        Send an asynchronous POST request to the specified URL with the given data using the provided aiohttp session, data will be formatted as `aiohttp.FormData` if specified .
-
-        Args:
-            session (aiohttp.ClientSession): The aiohttp client session to use for sending the request.
-            url (str): The URL to send the POST request to.
-            data (dict): A dictionary containing the data to be sent in the request.
-            as_form_data (bool, optional): Whether or not to format the data as `aiohttp.FormData`. Defaults to False.
-
-        Returns:
-            dict: A dictionary containing the JSON response data.
-
-        Raises:
-            Exception: If the response status code is not 200.
-        """
-        if as_form_data:
-            form_data = aiohttp.FormData()
-            for key, value in data.items():
-                form_data.add_field(key, value)
-
-        async with session.post(url, data=data) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                raise Exception(f"Error: {response.status} {response.reason} - {url}")
+        if any([isinstance(result, Exception) for result in results]):
+            raise Exception("One or more requests failed.")
+        else:
+            # Flatten the list of lists into one big list using itertools.chain
+            results = list(chain.from_iterable(results))
+            return results
     
     async def send_review_request(self, template_id: int | str, csv_stringio: StringIO, spam_check: bool = False):
         """
@@ -614,7 +612,7 @@ class YotpoAPIWrapper:
 
         async with aiohttp.ClientSession() as session:
             # Upload data needs to be sent as form data.
-            upload_response = await self._post_request(session, upload_url, {"file": csv_stringio, "utoken": self._utoken}, as_form_data=True)
+            upload_response = await self._post_request(session, upload_url, {"file": csv_stringio, "utoken": self._utoken})
             upload_data = upload_response['response']['response']
 
             if upload_data['is_valid_file']:
