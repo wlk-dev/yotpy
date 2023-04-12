@@ -18,7 +18,7 @@ jobs:
           python-version: '3.11'
 
       - run: pip install aiohttp requests pdoc
-      - run: pdoc -o docs/ yotpy
+      - run: pdoc yotpy.py -o docs/
 
       - uses: actions/upload-pages-artifact@v1
         with:
