@@ -330,22 +330,30 @@ class YotpoAPIWrapper:
     Args:
         app_key (str): The Yotpo app key for API authentication.
         secret (str): The client secret to authenticate requests.
+        preferred_uid (Optional[int], optional): The user ID to use for fetching data relating to the Yotpo APP. Defaults to None.
 
     Raises:
         Exception: If either app_key or secret is not provided.
     """
-    def __init__(self, app_key: str, secret: str) -> None:
+    
+    # TODO: Update the explanation of the preferred_uid argument to be more accurate/helpful.
+
+    def __init__(self, app_key: str, secret: str, preferred_uid: Optional[int] = None) -> None:
         if not app_key or not secret:
             raise Exception(f"app_key(exists={bool(app_key)}) and secret(exists={bool(secret)}) are required.")
         
         self._app_key = app_key
         self._utoken = YotpoAPIWrapper._get_user_token(app_key, secret)
+        self.user_id = preferred_uid
         self.app_endpoint = f"https://api.yotpo.com/v1/apps/{app_key}/reviews?utoken={self._utoken}&"
         self.widget_endpoint = f"https://api.yotpo.com/v1/widget/{app_key}/reviews?utoken={self._utoken}&"
         self.write_user_endpoint = f"https://api-write.yotpo.com/users/me?utoken={self._utoken}"
         self.write_app_endpoint = f"https://api-write.yotpo.com/apps"
 
     async def __aenter__(self):
+        if self.user_id is None:
+            self.user_id = (await self.get_user())['id']
+
         self.aiohttp_session = aiohttp.ClientSession()
         return self
 
@@ -403,7 +411,7 @@ class YotpoAPIWrapper:
                 return method in allowed_methods.split(", ")
             raise Exception(f"Error: {response.status} {response.reason} - {url}")
 
-    async def _get_request(self, url: str, parser: Callable[[dict], dict] = json_loads, exception_type: Exception = CustomException, **kwargs) -> dict:
+    async def _get_request(self, url: str, parser: Callable[[dict], dict] = None, exception_type: Exception = CustomException, **kwargs) -> dict:
         """
         Asynchronously sends a GET request to the specified URL and parses the response using the provided parser.
 
@@ -425,10 +433,13 @@ class YotpoAPIWrapper:
 
         async with self.aiohttp_session.get(url, **kwargs) as response:
             if response.status == 200:
-                return parser(await response.json())
+                raw_data = json_loads(await response.read())
+                if parser is None:
+                    return raw_data
+                return parser(raw_data)
             raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
 
-    async def _post_request(self, url: str, data: dict, parser: Callable[[dict], dict] = json_loads, exception_type: Exception = CustomException, **kwargs) -> dict:
+    async def _post_request(self, url: str, data: dict, parser: Callable[[dict], dict] = None, exception_type: Exception = CustomException, **kwargs) -> dict:
         """
         Asynchronously sends a POST request to the specified URL and parses the response using the provided parser.
 
@@ -451,7 +462,10 @@ class YotpoAPIWrapper:
 
         async with self.aiohttp_session.post(url, data=data, **kwargs) as response:
             if response.status == 200:
-                return parser(await response.json())
+                raw_data = json_loads(await response.read())
+                if parser is None:
+                    return raw_data
+                return parser(raw_data)
             raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
 
     async def _pages(self, endpoint: str, start_page: int = 1) -> AsyncGenerator[tuple[str, int], None]:
@@ -501,12 +515,9 @@ class YotpoAPIWrapper:
         
         return await self._get_request(url, parser=lambda data: data['response']['user'])
 
-    async def get_app(self, user_id: str | int) -> dict:
+    async def get_app(self) -> dict:
         """
-        Asynchronously fetches app data for the app associated with the given user ID.
-
-        Args:
-            user_id (str | int): The user ID for which to fetch app data.
+        Asynchronously fetches app data for the app associated with the preferred user ID.
 
         Returns:
             dict: A dictionary containing app information derived from the specified user. The app information includes
@@ -524,7 +535,7 @@ class YotpoAPIWrapper:
         # TODO: If the above is true, we can probably abstract away the `user_id` parameter and just use the user ID from the user endpoint.
         # And if need be we can add some configuration to allow the user to specify a user ID if they want to.
 
-        url = f"https://api-write.yotpo.com/apps/{self._app_key}?user_id={user_id}&utoken={self._utoken}"
+        url = f"https://api-write.yotpo.com/apps/{self._app_key}?user_id={self.user_id}&utoken={self._utoken}"
 
         return await self._get_request(url, parser=lambda data: data['response']['app'], exception_type=AppDataNotFound)
 
@@ -569,7 +580,7 @@ class YotpoAPIWrapper:
             Exception: If the response status is not 200.
         """
         is_widget = "widget" in url
-        self._get_request(url, parser=lambda data: data['response']['reviews'] if is_widget else data['reviews'])
+        return await self._get_request(url, parser=lambda data: data['response']['reviews'] if is_widget else data['reviews'])
 
     async def fetch_all_reviews(self, endpoint: str) -> list[dict]:
         """
@@ -590,6 +601,7 @@ class YotpoAPIWrapper:
             task = asyncio.create_task(self.fetch_review_page(url))
             review_requests.append(task)
         
+        print(f"Gathering {len(review_requests)} review requests...")
         results = await asyncio.gather(*review_requests, return_exceptions=True)
 
         if any([isinstance(result, Exception) for result in results]):
@@ -622,15 +634,13 @@ class YotpoAPIWrapper:
         """
         upload_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/upload_mailing_list"
         send_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/send_burst_email"
+        
+        upload_response = await self._post_request(upload_url, {"file": csv_stringio, "utoken": self._utoken})
+        upload_data = upload_response['response']['response']
 
-        async with aiohttp.ClientSession() as session:
-            # Upload data needs to be sent as form data.
-            upload_response = await self._post_request(session, upload_url, {"file": csv_stringio, "utoken": self._utoken})
-            upload_data = upload_response['response']['response']
-
-            if upload_data['is_valid_file']:
-                send_response = await self._post_request(session, send_url, {"file_path": upload_data['file_path'], "utoken": self._utoken, "activate_spam_limitations": spam_check})
-            else:
-                raise UploadException("Error: Uploaded file is not valid")
+        if upload_data['is_valid_file']:
+            send_response = await self._post_request(send_url, {"file_path": upload_data['file_path'], "utoken": self._utoken, "activate_spam_limitations": spam_check})
+        else:
+            raise UploadException("Error: Uploaded file is not valid")
 
         return {"upload": upload_response, "send": send_response}
