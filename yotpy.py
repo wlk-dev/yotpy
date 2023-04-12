@@ -307,7 +307,7 @@ class JSONTransformer:
         Note:
             If both exclude and include are specified, exclude takes precedence.
             This is done by using the following logic:
-                ```
+                ```python
                 if key_str in exclude or (include and key_str not in include):
                     continue
                 ```

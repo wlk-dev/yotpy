@@ -460,7 +460,7 @@ yotpy    </h1>
 </span><span id="L-307"><a href="#L-307"><span class="linenos">307</span></a><span class="sd">        Note:</span>
 </span><span id="L-308"><a href="#L-308"><span class="linenos">308</span></a><span class="sd">            If both exclude and include are specified, exclude takes precedence.</span>
 </span><span id="L-309"><a href="#L-309"><span class="linenos">309</span></a><span class="sd">            This is done by using the following logic:</span>
-</span><span id="L-310"><a href="#L-310"><span class="linenos">310</span></a><span class="sd">                ```</span>
+</span><span id="L-310"><a href="#L-310"><span class="linenos">310</span></a><span class="sd">                ```python</span>
 </span><span id="L-311"><a href="#L-311"><span class="linenos">311</span></a><span class="sd">                if key_str in exclude or (include and key_str not in include):</span>
 </span><span id="L-312"><a href="#L-312"><span class="linenos">312</span></a><span class="sd">                    continue</span>
 </span><span id="L-313"><a href="#L-313"><span class="linenos">313</span></a><span class="sd">                ```</span>
@@ -1395,7 +1395,7 @@ yotpy    </h1>
 </span><span id="JSONTransformer-308"><a href="#JSONTransformer-308"><span class="linenos">308</span></a><span class="sd">        Note:</span>
 </span><span id="JSONTransformer-309"><a href="#JSONTransformer-309"><span class="linenos">309</span></a><span class="sd">            If both exclude and include are specified, exclude takes precedence.</span>
 </span><span id="JSONTransformer-310"><a href="#JSONTransformer-310"><span class="linenos">310</span></a><span class="sd">            This is done by using the following logic:</span>
-</span><span id="JSONTransformer-311"><a href="#JSONTransformer-311"><span class="linenos">311</span></a><span class="sd">                ```</span>
+</span><span id="JSONTransformer-311"><a href="#JSONTransformer-311"><span class="linenos">311</span></a><span class="sd">                ```python</span>
 </span><span id="JSONTransformer-312"><a href="#JSONTransformer-312"><span class="linenos">312</span></a><span class="sd">                if key_str in exclude or (include and key_str not in include):</span>
 </span><span id="JSONTransformer-313"><a href="#JSONTransformer-313"><span class="linenos">313</span></a><span class="sd">                    continue</span>
 </span><span id="JSONTransformer-314"><a href="#JSONTransformer-314"><span class="linenos">314</span></a><span class="sd">                ```</span>
@@ -1526,38 +1526,54 @@ yotpy    </h1>
 <p>This method recursively traverses a nested JSON object and yields dictionaries containing the full key
 directory (as tuples) and their associated values. It handles dictionaries and lists within the JSON object.</p>
 
-<p>Example:
-    Input JSON:
-    <div class="pdoc-code codehilite">
-    <pre><span></span><code><span class="n">json</span> <span class="o">=</span> \
-    <span class="p">{</span> <span class="s2">&quot;a&quot;</span><span class="p">:</span> 
-        <span class="p">{</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span>
-            <span class="p">[</span> <span class="p">{</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span> <span class="p">},</span> <span class="p">{</span> <span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="p">]</span>
-        <span class="p">},</span>
-      <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span> <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="c1"># Streaming key directories and values:</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n"><a href="#JSONTransformer.stream_json_data">JSONTransformer.stream_json_data</a></span><span class="p">(</span><span class="n">json</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">())))</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="p">[{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">},</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">}]</span>
-    </code></pre>
-    </div></p>
+<h6 id="example">Example:</h6>
 
-<p>Args:
-    json (dict): The JSON object to stream.
-    keys (tuple): The current list of keys being traversed.</p>
+<blockquote>
+  <p>Input JSON:</p>
+  
+  <div class="pdoc-code codehilite">
+<pre><span></span><code><span class="n">json</span> <span class="o">=</span> \
+<span class="p">{</span> <span class="s2">&quot;a&quot;</span><span class="p">:</span> 
+    <span class="p">{</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span>
+        <span class="p">[</span> <span class="p">{</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span> <span class="p">},</span> <span class="p">{</span> <span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="p">]</span>
+    <span class="p">},</span>
+  <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span> <span class="p">}</span>
+<span class="p">}</span>
+<span class="c1"># Streaming key directories and values:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n"><a href="#JSONTransformer.stream_json_data">JSONTransformer.stream_json_data</a></span><span class="p">(</span><span class="n">json</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">())))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">[{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">},</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="p">{</span><span class="s2">&quot;keys&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">),</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">}]</span>
+</code></pre>
+  </div>
+</blockquote>
 
-<p>Yields:
-    dict[str, Union[tuple | str]]: A dictionary containing the current key "directory" (as a tuple) and its associated value.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    Iterator[dict[str, Union[tuple | str]]]: An iterator that yields dictionaries with the current key "directory" and its associated value.</p>
+<ul>
+<li><strong>json (dict):</strong>  The JSON object to stream.</li>
+<li><strong>keys (tuple):</strong>  The current list of keys being traversed.</li>
+</ul>
 
-<p>Note:
-    Tuples have been used instead of lists for the keys argument, for performance at the cost of readability of this function.</p>
+<h6 id="yields">Yields:</h6>
+
+<blockquote>
+  <p>dict[str, Union[tuple | str]]: A dictionary containing the current key "directory" (as a tuple) and its associated value.</p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>Iterator[dict[str, Union[tuple | str]]]: An iterator that yields dictionaries with the current key "directory" and its associated value.</p>
+</blockquote>
+
+<h6 id="note">Note:</h6>
+
+<blockquote>
+  <p>Tuples have been used instead of lists for the keys argument, for performance at the cost of readability of this function.</p>
+</blockquote>
 </div>
 
 
@@ -1603,13 +1619,19 @@ directory (as tuples) and their associated values. It handles dictionaries and l
 
             <div class="docstring"><p>Merges two lists of dictionaries into a single list, based on matching dictionary keys.</p>
 
-<p>Args:
-    key (str): The key to match the dictionaries on.
-    list_1 (list[dict]): The first list of dictionaries.
-    list_2 (list[dict]): The second list of dictionaries.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    list[dict]: A merged list of dictionaries containing merged disctionaries based on matching keys from both input lists.</p>
+<ul>
+<li><strong>key (str):</strong>  The key to match the dictionaries on.</li>
+<li><strong>list_1 (list[dict]):</strong>  The first list of dictionaries.</li>
+<li><strong>list_2 (list[dict]):</strong>  The second list of dictionaries.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>list[dict]: A merged list of dictionaries containing merged disctionaries based on matching keys from both input lists.</p>
+</blockquote>
 </div>
 
 
@@ -1690,38 +1712,47 @@ directory (as tuples) and their associated values. It handles dictionaries and l
 keys that represent the nested structure using a specified separator. Optionally,
 you can provide a list of keys to exclude or include in the resulting dictionary.</p>
 
-<p>Example:
-    Input JSON:
-    <div class="pdoc-code codehilite">
-    <pre><span></span><code><span class="n">json</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;a&quot;</span><span class="p">:</span> 
-        <span class="p">{</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span>
-            <span class="p">[</span> <span class="p">{</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span> <span class="p">},</span> <span class="p">{</span> <span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="p">]</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span> <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="c1"># Flattening with a &quot;.&quot; separator:</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n"><a href="#JSONTransformer.flatten">JSONTransformer.flatten</a></span><span class="p">(</span><span class="n">json</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="p">{</span><span class="s2">&quot;a.b.0.c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;a.b.1.e.0&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;a.b.1.e.1&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;a.b.1.e.2&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;x.y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">}</span>
-    </code></pre>
-    </div></p>
+<h6 id="example">Example:</h6>
 
-<pre><code>Include and Exclude should be formatted with the complete nested key output in mind.
-
-e.g  `include=["a.b.0.c"]`, returns `{"a.b.0.c": "d"}` only.
+<blockquote>
+  <p>Input JSON:</p>
+  
+  <div class="pdoc-code codehilite">
+<pre><span></span><code><span class="n">json</span> <span class="o">=</span> <span class="p">{</span> <span class="s2">&quot;a&quot;</span><span class="p">:</span> 
+    <span class="p">{</span> <span class="s2">&quot;b&quot;</span><span class="p">:</span>
+        <span class="p">[</span> <span class="p">{</span> <span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span> <span class="p">},</span> <span class="p">{</span> <span class="s2">&quot;e&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="p">}</span> <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span> <span class="p">}</span>
+<span class="p">}</span>
+<span class="c1"># Flattening with a &quot;.&quot; separator:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n"><a href="#JSONTransformer.flatten">JSONTransformer.flatten</a></span><span class="p">(</span><span class="n">json</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">{</span><span class="s2">&quot;a.b.0.c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;a.b.1.e.0&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;a.b.1.e.1&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;a.b.1.e.2&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+<span class="o">&gt;&gt;&gt;</span>  <span class="s2">&quot;x.y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">}</span>
 </code></pre>
+  </div>
+  
+  <p>Include and Exclude should be formatted with the complete nested key output in mind.</p>
+  
+  <p>e.g  <code>include=["a.b.0.c"]</code>, returns <code>{"a.b.0.c": "d"}</code> only.</p>
+</blockquote>
 
-<p>Args:
-    json (dict): The JSON object to flatten.
-    sep (str): The separator to use for joining nested keys.
-    exclude (list[str]): If specified, exclude keys that match the specified keys and include all others.
-    include (list[str]): If specified, only include keys that match the specified keys.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    dict[str, str]: A flattened dictionary with keys representing the nested structure.</p>
+<ul>
+<li><strong>json (dict):</strong>  The JSON object to flatten.</li>
+<li><strong>sep (str):</strong>  The separator to use for joining nested keys.</li>
+<li><strong>exclude (list[str]):</strong>  If specified, exclude keys that match the specified keys and include all others.</li>
+<li><strong>include (list[str]):</strong>  If specified, only include keys that match the specified keys.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>dict[str, str]: A flattened dictionary with keys representing the nested structure.</p>
+</blockquote>
 </div>
 
 
@@ -1787,36 +1818,46 @@ e.g  `include=["a.b.0.c"]`, returns `{"a.b.0.c": "d"}` only.
 dictionary with keys representing the nested structure using a specified separator. 
 Optionally, you can provide a list of keys to exclude or include in the resulting dictionaries.</p>
 
-<p>Example:
-    Input JSON list:
-    <div class="pdoc-code codehilite">
-    <pre><span></span><code><span class="p">[</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">}},</span>
-            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">}</span>
-        <span class="p">},</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">}},</span>
-            <span class="s2">&quot;u&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;v&quot;</span><span class="p">:</span> <span class="s2">&quot;w&quot;</span><span class="p">}</span>
-        <span class="p">}</span>
-    <span class="p">]</span>
-    <span class="c1"># Flattening with a &quot;.&quot; separator:</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n"><a href="#JSONTransformer.flatten_list">JSONTransformer.flatten_list</a></span><span class="p">(</span><span class="n">json_list</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="p">[</span>
-    <span class="o">&gt;&gt;&gt;</span>     <span class="p">{</span><span class="s2">&quot;a.b.c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;x.y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">},</span>
-    <span class="o">&gt;&gt;&gt;</span>     <span class="p">{</span><span class="s2">&quot;p.q.r&quot;</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;u.v&quot;</span><span class="p">:</span> <span class="s2">&quot;w&quot;</span><span class="p">}</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="p">]</span>
-    </code></pre>
-    </div></p>
+<h6 id="example">Example:</h6>
 
-<p>Args:
-    json_list (list[dict]): A list of JSON objects to flatten.
-    sep (str): The separator to use for joining nested keys.
-    exclude (list[str]): If specified, exclude keys that match the specified keys and include all others.
-    include (list[str]): If specified, only include keys that match the specified keys.</p>
+<blockquote>
+  <p>Input JSON list:</p>
+  
+  <div class="pdoc-code codehilite">
+<pre><span></span><code><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;a&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;b&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">}},</span>
+        <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;q&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">}},</span>
+        <span class="s2">&quot;u&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;v&quot;</span><span class="p">:</span> <span class="s2">&quot;w&quot;</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+<span class="c1"># Flattening with a &quot;.&quot; separator:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nb">print</span><span class="p">(</span><span class="n"><a href="#JSONTransformer.flatten_list">JSONTransformer.flatten_list</a></span><span class="p">(</span><span class="n">json_list</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">[</span>
+<span class="o">&gt;&gt;&gt;</span>     <span class="p">{</span><span class="s2">&quot;a.b.c&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span> <span class="s2">&quot;x.y&quot;</span><span class="p">:</span> <span class="s2">&quot;z&quot;</span><span class="p">},</span>
+<span class="o">&gt;&gt;&gt;</span>     <span class="p">{</span><span class="s2">&quot;p.q.r&quot;</span><span class="p">:</span> <span class="s2">&quot;s&quot;</span><span class="p">,</span> <span class="s2">&quot;u.v&quot;</span><span class="p">:</span> <span class="s2">&quot;w&quot;</span><span class="p">}</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">]</span>
+</code></pre>
+  </div>
+</blockquote>
 
-<p>Returns:
-    list[dict[str, any]]: A list of flattened dictionaries with keys representing the nested structure.</p>
+<h6 id="arguments">Arguments:</h6>
+
+<ul>
+<li><strong>json_list (list[dict]):</strong>  A list of JSON objects to flatten.</li>
+<li><strong>sep (str):</strong>  The separator to use for joining nested keys.</li>
+<li><strong>exclude (list[str]):</strong>  If specified, exclude keys that match the specified keys and include all others.</li>
+<li><strong>include (list[str]):</strong>  If specified, only include keys that match the specified keys.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>list[dict[str, any]]: A list of flattened dictionaries with keys representing the nested structure.</p>
+</blockquote>
 </div>
 
 
@@ -1850,11 +1891,17 @@ Optionally, you can provide a list of keys to exclude or include in the resultin
 
             <div class="docstring"><p>Get a complete headers list from a list of JSON objects.</p>
 
-<p>Args:
-    json_list (list[dict]): A list of JSON objects to iterate over.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    set[str]: A set of headers.</p>
+<ul>
+<li><strong>json_list (list[dict]):</strong>  A list of JSON objects to iterate over.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>set[str]: A set of headers.</p>
+</blockquote>
 </div>
 
 
@@ -1906,19 +1953,28 @@ Optionally, you can provide a list of keys to exclude or include in the resultin
 
             <div class="docstring"><p>Convert a BigQuery RowIterator into a set of headers and a list of rows.</p>
 
-<p>Args:
-    iterator (Iterator): A BigQuery RowIterator object.
-    exclude (set[str], optional): A set of field names to exclude from the output. Defaults to an empty set.
-    include (set[str], optional): A set of field names to include in the output. If provided, only these fields
-                                  will be included. Defaults to an empty set.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    tuple[set, list]: A tuple containing a set of headers and a list of rows as dictionaries.
-                      Headers are the field names included in the output, and rows are dictionaries
-                      containing field values for each row in the RowIterator.</p>
+<ul>
+<li><strong>iterator (Iterator):</strong>  A BigQuery RowIterator object.</li>
+<li><strong>exclude (set[str], optional):</strong>  A set of field names to exclude from the output. Defaults to an empty set.</li>
+<li><strong>include (set[str], optional):</strong>  A set of field names to include in the output. If provided, only these fields
+will be included. Defaults to an empty set.</li>
+</ul>
 
-<p>Note:
-    If both <code>exclude</code> and <code>include</code> are provided, the <code>include</code> set takes precedence.</p>
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>tuple[set, list]: A tuple containing a set of headers and a list of rows as dictionaries.
+                    Headers are the field names included in the output, and rows are dictionaries
+                    containing field values for each row in the RowIterator.</p>
+</blockquote>
+
+<h6 id="note">Note:</h6>
+
+<blockquote>
+  <p>If both <code>exclude</code> and <code>include</code> are provided, the <code>include</code> set takes precedence.</p>
+</blockquote>
 </div>
 
 
@@ -1954,7 +2010,7 @@ Optionally, you can provide a list of keys to exclude or include in the resultin
 </span><span id="JSONTransformer.to_rows-308"><a href="#JSONTransformer.to_rows-308"><span class="linenos">308</span></a><span class="sd">        Note:</span>
 </span><span id="JSONTransformer.to_rows-309"><a href="#JSONTransformer.to_rows-309"><span class="linenos">309</span></a><span class="sd">            If both exclude and include are specified, exclude takes precedence.</span>
 </span><span id="JSONTransformer.to_rows-310"><a href="#JSONTransformer.to_rows-310"><span class="linenos">310</span></a><span class="sd">            This is done by using the following logic:</span>
-</span><span id="JSONTransformer.to_rows-311"><a href="#JSONTransformer.to_rows-311"><span class="linenos">311</span></a><span class="sd">                ```</span>
+</span><span id="JSONTransformer.to_rows-311"><a href="#JSONTransformer.to_rows-311"><span class="linenos">311</span></a><span class="sd">                ```python</span>
 </span><span id="JSONTransformer.to_rows-312"><a href="#JSONTransformer.to_rows-312"><span class="linenos">312</span></a><span class="sd">                if key_str in exclude or (include and key_str not in include):</span>
 </span><span id="JSONTransformer.to_rows-313"><a href="#JSONTransformer.to_rows-313"><span class="linenos">313</span></a><span class="sd">                    continue</span>
 </span><span id="JSONTransformer.to_rows-314"><a href="#JSONTransformer.to_rows-314"><span class="linenos">314</span></a><span class="sd">                ```</span>
@@ -1978,21 +2034,32 @@ dictionary with keys representing the nested structure using a specified separat
 It then creates a list of rows, where each row contains the values from the flattened
 dictionaries, and a set of headers representing the unique keys of the flattened dictionaries.</p>
 
-<p>Args:
-    json_list (list[dict]): The list of JSON objects to flatten.
-    sep (str): The separator to use for joining nested keys.
-    exclude (list[str]): If specified, exclude keys that match the specified keys and include all others.
-    include (list[str]): If specified, only include keys that match the specified keys.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Note:
-    If both exclude and include are specified, exclude takes precedence.
-    This is done by using the following logic:
-        <pre><code>if key_str in exclude or (include and key_str not in include):
-    continue
-</code></pre></p>
+<ul>
+<li><strong>json_list (list[dict]):</strong>  The list of JSON objects to flatten.</li>
+<li><strong>sep (str):</strong>  The separator to use for joining nested keys.</li>
+<li><strong>exclude (list[str]):</strong>  If specified, exclude keys that match the specified keys and include all others.</li>
+<li><strong>include (list[str]):</strong>  If specified, only include keys that match the specified keys.</li>
+</ul>
 
-<p>Returns:
-    tuple[list, set]: A tuple containing the list of rows and the set of headers.</p>
+<h6 id="note">Note:</h6>
+
+<blockquote>
+  <p>If both exclude and include are specified, exclude takes precedence.
+  This is done by using the following logic:
+      <div class="pdoc-code codehilite">
+    <pre><span></span><code><span class="k">if</span> <span class="n">key_str</span> <span class="ow">in</span> <span class="n">exclude</span> <span class="ow">or</span> <span class="p">(</span><span class="n">include</span> <span class="ow">and</span> <span class="n">key_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">include</span><span class="p">):</span>
+        <span class="k">continue</span>
+    </code></pre>
+      </div></p>
+</blockquote>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>tuple[list, set]: A tuple containing the list of rows and the set of headers.</p>
+</blockquote>
 </div>
 
 
@@ -2045,12 +2112,18 @@ dictionaries, and a set of headers representing the unique keys of the flattened
 a CSV formatted StringIO object. It can be used to create a CSV file-like object without
 creating an actual file on the filesystem.</p>
 
-<p>Args:
-    rows (list[dict]): A list of rows to convert into a CSV formatted StringIO object.
-    headers (set): A set of headers to use for the CSV data.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    StringIO: A CSV formatted StringIO object.</p>
+<ul>
+<li><strong>rows (list[dict]):</strong>  A list of rows to convert into a CSV formatted StringIO object.</li>
+<li><strong>headers (set):</strong>  A set of headers to use for the CSV data.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>StringIO: A CSV formatted StringIO object.</p>
+</blockquote>
 </div>
 
 
@@ -2433,13 +2506,19 @@ creating an actual file on the filesystem.</p>
 
 <p>The YotpoAPIWrapper uses the provided app_key and secret for authentication and constructs the necessary API endpoints for making requests.</p>
 
-<p>Args:
-    app_key (str): The Yotpo app key for API authentication.
-    secret (str): The client secret to authenticate requests.
-    preferred_uid (Optional[int], optional): The user ID to use for fetching data relating to the Yotpo APP. Defaults to None.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Raises:
-    Exception: If either app_key or secret is not provided.</p>
+<ul>
+<li><strong>app_key (str):</strong>  The Yotpo app key for API authentication.</li>
+<li><strong>secret (str):</strong>  The client secret to authenticate requests.</li>
+<li><strong>preferred_uid (Optional[int], optional):</strong>  The user ID to use for fetching data relating to the Yotpo APP. Defaults to None.</li>
+</ul>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>Exception:</strong>  If either app_key or secret is not provided.</li>
+</ul>
 </div>
 
 
@@ -2512,19 +2591,28 @@ creating an actual file on the filesystem.</p>
 metadata like sign_in_count and package details. This data can be useful for understanding user profiles,
 managing access, or customizing the user experience based on the retrieved information.</p>
 
-<p>Returns:
-    dict: A dictionary containing user information, including personal details, activity statistics, and package details.</p>
+<h6 id="returns">Returns:</h6>
 
-<p>Example:
-    <div class="pdoc-code codehilite">
-    <pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">yotpo</span> <span class="o">=</span> <span class="n">YotpoAPIWrapper</span><span class="p">(</span><span class="n">app_key</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
-    <span class="o">&gt;&gt;&gt;</span> <span class="k">async</span> <span class="k">with</span> <span class="n">yotpo</span> <span class="k">as</span> <span class="n">yp</span><span class="p">:</span>
-    <span class="o">&gt;&gt;&gt;</span>     <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">yp</span><span class="o">.</span><span class="n">get_user</span><span class="p">()</span>
-    </code></pre>
-    </div></p>
+<blockquote>
+  <p>dict: A dictionary containing user information, including personal details, activity statistics, and package details.</p>
+</blockquote>
 
-<p>Raises:
-    Exception: If the request to the user endpoint returns a non-OK status.</p>
+<h6 id="example">Example:</h6>
+
+<blockquote>
+  <div class="pdoc-code codehilite">
+<pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">yotpo</span> <span class="o">=</span> <span class="n">YotpoAPIWrapper</span><span class="p">(</span><span class="n">app_key</span><span class="p">,</span> <span class="n">secret</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">async</span> <span class="k">with</span> <span class="n">yotpo</span> <span class="k">as</span> <span class="n">yp</span><span class="p">:</span>
+<span class="o">&gt;&gt;&gt;</span>     <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">yp</span><span class="o">.</span><span class="n">get_user</span><span class="p">()</span>
+</code></pre>
+  </div>
+</blockquote>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>Exception:</strong>  If the request to the user endpoint returns a non-OK status.</li>
+</ul>
 </div>
 
 
@@ -2568,15 +2656,21 @@ managing access, or customizing the user experience based on the retrieved infor
 
             <div class="docstring"><p>Asynchronously fetches app data for the app associated with the preferred user ID.</p>
 
-<p>Returns:
-    dict: A dictionary containing app information derived from the specified user. The app information includes
-    details such as app_key, domain, name, url, account type, users, reminders, custom design, created
-    and updated timestamps, tracking code status, account emails, package details, enabled product
-    categories, features usage summary, data for events, category, installed status, organization,
-    and associated apps.</p>
+<h6 id="returns">Returns:</h6>
 
-<p>Raises:
-    AppDataNotFound: If the request to the app endpoint returns a non-OK status.</p>
+<blockquote>
+  <p>dict: A dictionary containing app information derived from the specified user. The app information includes
+  details such as app_key, domain, name, url, account type, users, reminders, custom design, created
+  and updated timestamps, tracking code status, account emails, package details, enabled product
+  categories, features usage summary, data for events, category, installed status, organization,
+  and associated apps.</p>
+</blockquote>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>AppDataNotFound:</strong>  If the request to the app endpoint returns a non-OK status.</li>
+</ul>
 </div>
 
 
@@ -2616,11 +2710,17 @@ managing access, or customizing the user experience based on the retrieved infor
 <p>This method first retrieves the user and their user ID, then fetches the app data
 associated with that user. Finally, it returns the total number of reviews for the app.</p>
 
-<p>Returns:
-    int: The total number of reviews for the app.</p>
+<h6 id="returns">Returns:</h6>
 
-<p>Raises:
-    AppDataNotFound: If unable to get the app data.</p>
+<blockquote>
+  <p>int: The total number of reviews for the app.</p>
+</blockquote>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>AppDataNotFound:</strong>  If unable to get the app data.</li>
+</ul>
 </div>
 
 
@@ -2704,8 +2804,11 @@ The primary use case for this function is to obtain the template IDs required fo
 </code></pre>
 </div>
 
-<p>Returns:
-    dict: A dictionary containing the email templates, keyed by their names.</p>
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>dict: A dictionary containing the email templates, keyed by their names.</p>
+</blockquote>
 </div>
 
 
@@ -2745,11 +2848,17 @@ The primary use case for this function is to obtain the template IDs required fo
 <p>This function fetches review data from the provided URL and parses the response based on whether
 the URL is for the widget endpoint or not.</p>
 
-<p>Args:
-    url (str): The URL from which to fetch review data.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    list[dict]: A list of review dictionaries.</p>
+<ul>
+<li><strong>url (str):</strong>  The URL from which to fetch review data.</li>
+</ul>
+
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>list[dict]: A list of review dictionaries.</p>
+</blockquote>
 </div>
 
 
@@ -2811,16 +2920,25 @@ the URL is for the widget endpoint or not.</p>
 and only from the app endpoint if <code>published</code> is set to False. The fetched reviews are then merged
 based on their "id" attribute.</p>
 
-<p>Args:
-    published (bool, optional): Determines if the function should fetch reviews from both
-                                 the app and widget endpoints or just the app endpoint.
-                                 Defaults to True.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    list[dict]: A list of merged review dictionaries.</p>
+<ul>
+<li><strong>published (bool, optional):</strong>  Determines if the function should fetch reviews from both
+the app and widget endpoints or just the app endpoint.
+Defaults to True.</li>
+</ul>
 
-<p>Raises:
-    Exception: If one or more requests fail.</p>
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>list[dict]: A list of merged review dictionaries.</p>
+</blockquote>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>Exception:</strong>  If one or more requests fail.</li>
+</ul>
 </div>
 
 
@@ -2878,18 +2996,27 @@ based on their "id" attribute.</p>
 request data, and an optional spam_check flag. It uploads the review data to Yotpo and
 sends the review request using the specified email template.</p>
 
-<p>Args:
-    template_id (int | str): The ID of the email template to use for the review request.
-    csv_stringio (StringIO): A StringIO object containing the review request data in CSV format.
-                             (Use the <code><a href="#JSONTransformer">JSONTransformer</a></code> class to generate this.)
-    spam_check (bool, optional): Whether or not to enable the built-in Yotpo spam check. Defaults to False.</p>
+<h6 id="arguments">Arguments:</h6>
 
-<p>Returns:
-    dict: A dictionary containing the response data.</p>
+<ul>
+<li><strong>template_id (int | str):</strong>  The ID of the email template to use for the review request.</li>
+<li><strong>csv_stringio (StringIO):</strong>  A StringIO object containing the review request data in CSV format.
+(Use the <code><a href="#JSONTransformer">JSONTransformer</a></code> class to generate this.)</li>
+<li><strong>spam_check (bool, optional):</strong>  Whether or not to enable the built-in Yotpo spam check. Defaults to False.</li>
+</ul>
 
-<p>Raises:
-    Exception: If any response status is not 200.
-    UploadException: If the uploaded file is not valid.</p>
+<h6 id="returns">Returns:</h6>
+
+<blockquote>
+  <p>dict: A dictionary containing the response data.</p>
+</blockquote>
+
+<h6 id="raises">Raises:</h6>
+
+<ul>
+<li><strong>Exception:</strong>  If any response status is not 200.</li>
+<li><strong>UploadException:</strong>  If the uploaded file is not valid.</li>
+</ul>
 </div>
 
 
