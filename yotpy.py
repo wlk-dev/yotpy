@@ -552,9 +552,41 @@ class YotpoAPIWrapper:
         return app['data_for_events']['total_reviews']
     
     async def get_templates(self) -> dict:
+        """
+        Asynchronously fetch the email templates associated with the Yotpo account.
+
+        This method retrieves the app data, extracts the email templates, and returns them as a dictionary.
+        The primary use case for this function is to obtain the template IDs required for the 'send_review_request' method.
+
+        The returned dictionary contains template objects with properties such as 'id' (template_id),
+        'email_type', 'data', and others. For example:
+        ```python
+            {
+                'id': 10291872,
+                'account_id': 9092811,
+                'email_type_id': 31,
+                'email_type': {
+                    'id': 31,
+                    'name': 'mail_post_service',
+                    'template': 'testimonials_request'
+                },
+                'data': {
+                    'subject': 'Tell us what you think - {company_name}',
+                    'header': 'Hello {user},\\n We love having you as a customer and would really appreciate it if you filled out the form below.',
+                    'bottom': 'Thanks so much! <br> - {company_name}'
+                },
+                'formless_call_to_action': '',
+                'days_delay': 3,
+                'email_submission_type_id': 9
+            }
+        ```
+        Returns:
+            dict: A dictionary containing the email templates, keyed by their names.
+        """
         app = await self.get_app()
         templates = app['account_emails']
         return templates
+
         
     async def fetch_review_page(self, url: str) -> list[dict]:
         """
