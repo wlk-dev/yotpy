@@ -20,3 +20,6 @@ env/
 *.log
 *.bak
 .DS_Store
+
+# Test Scripts
+test.py
