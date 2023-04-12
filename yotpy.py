@@ -2,10 +2,11 @@
 Yotpy: An easy-to-use Python wrapper for the Yotpo web API.
 """
 
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 
 import asyncio
 import aiohttp
+
 from json import loads as json_loads
 from csv import DictWriter
 from io import StringIO
@@ -14,45 +15,10 @@ from html import unescape
 from urllib.parse import urlencode
 from math import ceil
 from itertools import chain
+from .exceptions import CustomException, SessionNotCreatedError, FailedToGetTokenError, PreflightException, UploadException, SendException, UserNotFound, AppNotFound
 
 
-class SessionNotCreatedError(Exception):
-    """Raised when the aiohttp.ClientSession has not been created before making a request."""
-
-    def __init__(self, message="Session not created. Please use `async with` context manager to make requests."):
-        super().__init__(message)
-
-
-class PreflightException(Exception):
-    pass
-
-
-class UploadException(Exception):
-    pass
-
-
-class SendException(Exception):
-    pass
-
-
-class CustomException(Exception):
-    pass
-
-# TODO: Refactor naming for the below two classes
-
-
-class UserIdNotFound(Exception):
-    """Raised when the user ID cannot be retrieved."""
-    pass
-
-
-class AppDataNotFound(Exception):
-    """Raised when the app data cannot be retrieved."""
-    pass
-
-# TODO: More insightful sentiment analysis
 # TODO: Give better error messages for bad requests
-
 
 class JSONTransformer:
     """
@@ -416,7 +382,7 @@ class YotpoAPIWrapper:
             "client_secret": self._secret,
         }
 
-        return (await self._post_request(url, data=data, parser=lambda x: x["access_token"]))
+        return (await self._post_request(url, data=data, parser=lambda x: x["access_token"], exception_type=FailedToGetTokenError))
 
     async def _options_request(self, url: str, method: str) -> bool:
         """
@@ -433,7 +399,7 @@ class YotpoAPIWrapper:
 
         # Cheeky way to make sure `method` is at least syntactically correct.
         if (method := method.upper()) not in ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']:
-            raise Exception("Invalid HTTP method: ", method)
+            raise PreflightException(method)
 
         async with self.aiohttp_session.options(url) as response:
             if response.ok:
@@ -442,7 +408,7 @@ class YotpoAPIWrapper:
             raise Exception(
                 f"Error: {response.status} {response.reason} - {url}")
 
-    async def _get_request(self, url: str, parser: Callable[[dict], dict] = None, exception_type: Exception = CustomException, **kwargs) -> dict:
+    async def _get_request(self, url: str, parser: Callable[[dict], dict] = None, exception_type=CustomException, **kwargs) -> dict:
         """
         Asynchronously sends a GET request to the specified URL and parses the response using the provided parser.
 
@@ -543,7 +509,7 @@ class YotpoAPIWrapper:
         """
         url = self.write_user_endpoint
 
-        return await self._get_request(url, parser=lambda data: data['response']['user'])
+        return await self._get_request(url, parser=lambda data: data['response']['user'], exception_type=UserNotFound)
 
     async def get_app(self) -> dict:
         """
@@ -567,7 +533,7 @@ class YotpoAPIWrapper:
 
         url = f"https://api-write.yotpo.com/apps/{self._app_key}?user_id={self.user_id}&utoken={self._utoken}"
 
-        return await self._get_request(url, parser=lambda data: data['response']['app'], exception_type=AppDataNotFound)
+        return await self._get_request(url, parser=lambda data: data['response']['app'], exception_type=AppNotFound)
 
     async def get_total_reviews(self) -> int:
         """
@@ -665,7 +631,8 @@ class YotpoAPIWrapper:
                 task = asyncio.create_task(self.fetch_review_page(url))
                 review_requests.append(task)
 
-            print(f"Gathering {len(review_requests)} review requests from {endpoint}...")
+            print(
+                f"Gathering {len(review_requests)} review requests from {endpoint}...")
             results = await asyncio.gather(*review_requests, return_exceptions=True)
 
             if any([isinstance(result, Exception) for result in results]):
@@ -701,11 +668,11 @@ class YotpoAPIWrapper:
         upload_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/upload_mailing_list"
         send_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/send_burst_email"
 
-        upload_response = await self._post_request(upload_url, {"file": csv_stringio, "utoken": self._utoken})
+        upload_response = await self._post_request(upload_url, {"file": csv_stringio, "utoken": self._utoken}, exception_type=UploadException)
         upload_data = upload_response['response']['response']
 
         if upload_data['is_valid_file']:
-            send_response = await self._post_request(send_url, {"file_path": upload_data['file_path'], "utoken": self._utoken, "activate_spam_limitations": spam_check})
+            send_response = await self._post_request(send_url, {"file_path": upload_data['file_path'], "utoken": self._utoken, "activate_spam_limitations": spam_check}, exception_type=SendException)
         else:
             raise UploadException("Error: Uploaded file is not valid")
 

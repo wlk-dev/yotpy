@@ -22,4 +22,7 @@ requires = [
 ]
 keywords = "yotpo, api, wrapper, python, data, transformation, client, integration, review, ecommerce"
 
+[tool.flit.metadata.urls]
+Documentation = "https://wlk-dev.github.io/yotpy/yotpy.html"
+
 [tool.flit.metadata.requires-extra]

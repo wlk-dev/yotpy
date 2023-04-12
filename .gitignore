@@ -22,5 +22,6 @@ env/
 .DS_Store
 
 # Test Files
+testing/
 test.py
 test.csv
