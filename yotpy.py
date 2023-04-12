@@ -18,6 +18,7 @@ from itertools import chain
 
 class SessionNotCreatedError(Exception):
     """Raised when the aiohttp.ClientSession has not been created before making a request."""
+
     def __init__(self, message="Session not created. Please use `async with` context manager to make requests."):
         super().__init__(message)
 
@@ -25,19 +26,25 @@ class SessionNotCreatedError(Exception):
 class PreflightException(Exception):
     pass
 
+
 class UploadException(Exception):
     pass
 
+
 class SendException(Exception):
     pass
+
 
 class CustomException(Exception):
     pass
 
 # TODO: Refactor naming for the below two classes
+
+
 class UserIdNotFound(Exception):
     """Raised when the user ID cannot be retrieved."""
     pass
+
 
 class AppDataNotFound(Exception):
     """Raised when the app data cannot be retrieved."""
@@ -46,32 +53,32 @@ class AppDataNotFound(Exception):
 # TODO: More insightful sentiment analysis
 # TODO: Give better error messages for bad requests
 
+
 class JSONTransformer:
     """
     A utility class for transforming JSON data into various formats.
     """
 
     @staticmethod
-    def _stream_json_data(json: dict, keys: tuple) -> Iterator[dict[str, Union[tuple, str]]]:
+    def stream_json_data(json: dict, keys: tuple) -> Iterator[dict[str, Union[tuple, str]]]:
         """
         Stream the full key directory and its final value of a JSON object of arbitrary depth, including lists.
-        
+
         This method recursively traverses a nested JSON object and yields dictionaries containing the full key
         directory (as tuples) and their associated values. It handles dictionaries and lists within the JSON object.
 
         Example:
             Input JSON:
-            ```json
+            ```python
+            json = \\
             { "a": 
                 { "b":
                     [ { "c": "d" }, { "e": [1,2,3] } ]
                 },
-            "x": { "y": "z" }
+              "x": { "y": "z" }
             }
-            ```
-            Streaming key directories and values:
-            ```python
-            >>> print(list(JSONTransformer._stream_json_data(json, tuple())))
+            # Streaming key directories and values:
+            >>> print(list(JSONTransformer.stream_json_data(json, tuple())))
             >>> [{"keys": ("a", "b", "0", "c"), "value": "d"},
             >>>  {"keys": ("a", "b", "1", "e", "0"), "value": 1},
             >>>  {"keys": ("a", "b", "1", "e", "1"), "value": 2},
@@ -98,7 +105,7 @@ class JSONTransformer:
             if isinstance(value, dict):
                 # If the value is another dictionary, recursively call this method
                 # with the updated keys "list".
-                for result in JSONTransformer._stream_json_data(value, keys + (key,)):
+                for result in JSONTransformer.stream_json_data(value, keys + (key,)):
                     yield result
             elif isinstance(value, list):
                 # If the value is a list, iterate through the list and recursively
@@ -107,14 +114,13 @@ class JSONTransformer:
                     if not isinstance(item, (dict, list)):
                         yield {'keys': keys + (key, str(index)), 'value': item}
                         continue
-                        
-                    for result in JSONTransformer._stream_json_data(item, keys + (key, str(index))):
+
+                    for result in JSONTransformer.stream_json_data(item, keys + (key, str(index))):
                         yield result
             else:
                 # If the value is not a dictionary or list, yield a dictionary containing
                 # the current key "list" (as a tuple) and value.
                 yield {'keys': keys + (key,), 'value': value}
-
 
     @staticmethod
     def merge_on_key(key: str, list_1: list[dict], list_2: list[dict]) -> list[dict]:
@@ -145,23 +151,21 @@ class JSONTransformer:
     def flatten(json: dict[str, any], sep: str, exclude: list[str] = [], include: list[str] = []) -> dict[str, any]:
         """
         Flatten a nested JSON object into a dictionary with flattened keys.
-        
+
         This method takes a nested JSON object and converts it into a dictionary with
         keys that represent the nested structure using a specified separator. Optionally,
         you can provide a list of keys to exclude or include in the resulting dictionary.
 
         Example:
             Input JSON:
-            ```json
-            { "a": 
+            ```python
+            json = { "a": 
                 { "b":
                     [ { "c": "d" }, { "e": [1,2,3] } ]
                 },
                 "x": { "y": "z" }
             }
-            ```
-            Flattening with a "." separator:
-            ```python
+            # Flattening with a "." separator:
             >>> print(JSONTransformer.flatten(json, "."))
             >>> {"a.b.0.c": "d",
             >>>  "a.b.1.e.0": 1,
@@ -170,7 +174,7 @@ class JSONTransformer:
             >>>  "x.y": "z"}
             ```
             Include and Exclude should be formatted with the complete nested key output in mind.
-            
+
             e.g  `include=["a.b.0.c"]`, returns `{"a.b.0.c": "d"}` only.
 
         Args:
@@ -183,9 +187,9 @@ class JSONTransformer:
             dict[str, str]: A flattened dictionary with keys representing the nested structure.
         """
 
-        # Stream the key-value pairs of the JSON object using the _stream_json_data method.
+        # Stream the key-value pairs of the JSON object using the stream_json_data method.
         data = {}
-        for item in JSONTransformer._stream_json_data(json, tuple()):
+        for item in JSONTransformer.stream_json_data(json, tuple()):
             keys = item['keys']
             key_str = sep.join(keys)
             if (exclude and key_str in exclude) or (include and key_str not in include):
@@ -203,14 +207,14 @@ class JSONTransformer:
     def flatten_list(json_list: list[dict], sep: str, exclude: list[str] = [], include: list[str] = []) -> list[dict[str, any]]:
         """
         Flattens a list of JSON objects into a list of dictionaries with flattened keys.
-        
+
         This method takes a list of nested JSON objects and converts each JSON object into a
         dictionary with keys representing the nested structure using a specified separator. 
         Optionally, you can provide a list of keys to exclude or include in the resulting dictionaries.
 
         Example:
             Input JSON list:
-            ```json
+            ```python
             [
                 {
                     "a": {"b": {"c": "d"}},
@@ -221,9 +225,7 @@ class JSONTransformer:
                     "u": {"v": "w"}
                 }
             ]
-            ```
-            Flattening with a "." separator:
-            ```python
+            # Flattening with a "." separator:
             >>> print(JSONTransformer.flatten_list(json_list, "."))
             >>> [
             >>>     {"a.b.c": "d", "x.y": "z"},
@@ -275,11 +277,13 @@ class JSONTransformer:
             If both `exclude` and `include` are provided, the `include` set takes precedence.
         """
         schema = list(iterator.schema)
-        headers = {field.name for field in schema if (include and field.name in include) or (exclude and field.name not in exclude)}
+        headers = {field.name for field in schema if (
+            include and field.name in include) or (exclude and field.name not in exclude)}
 
         rows = []
         for row in iterator:
-            [row.pop(field.name, None) for field in schema if field.name not in headers]
+            [row.pop(field.name, None)
+             for field in schema if field.name not in headers]
             rows.append(row)
 
         return headers, rows
@@ -288,7 +292,7 @@ class JSONTransformer:
     def to_rows(json_list: list[dict], sep: str, exclude: list[str] = [], include: list[str] = []) -> tuple[list, set]:
         """
         Flatten a list of JSON objects into a list of rows and a set of headers.
-        
+
         This method takes a list of nested JSON objects and converts each JSON object into a
         dictionary with keys representing the nested structure using a specified separator. 
         It then creates a list of rows, where each row contains the values from the flattened
@@ -318,12 +322,11 @@ class JSONTransformer:
             headers.update(item.keys())
         return rows, headers
 
-
     @staticmethod
     def to_csv_stringio(rows: list[dict], headers: set) -> StringIO:
         """
         Convert a list of rows into a CSV formatted StringIO object.
-        
+
         This method takes a list of rows (dictionaries) and a set of headers, and writes them into
         a CSV formatted StringIO object. It can be used to create a CSV file-like object without
         creating an actual file on the filesystem.
@@ -349,7 +352,7 @@ class JSONTransformer:
 
 
 class YotpoAPIWrapper:
-    #NOTE: Update docstring if more methods are added to account for any added functionality outside of the defined scope.
+    # NOTE: Update docstring if more methods are added to account for any added functionality outside of the defined scope.
     """
     A class for interacting with the Yotpo API to fetch app and account information, review data, and send manual review requests.
 
@@ -363,13 +366,14 @@ class YotpoAPIWrapper:
     Raises:
         Exception: If either app_key or secret is not provided.
     """
-    
+
     # TODO: Update the explanation of the preferred_uid argument to be more accurate/helpful.
 
     def __init__(self, app_key: str, secret: str, preferred_uid: Optional[int] = None) -> None:
         if not app_key or not secret:
-            raise Exception(f"app_key(exists={bool(app_key)}) and secret(exists={bool(secret)}) are required.")
-        
+            raise Exception(
+                f"app_key(exists={bool(app_key)}) and secret(exists={bool(secret)}) are required.")
+
         self._app_key = app_key
         self._secret = secret
         self.user_id = preferred_uid
@@ -435,7 +439,8 @@ class YotpoAPIWrapper:
             if response.ok:
                 allowed_methods = response.headers.get("Allow", "")
                 return method in allowed_methods.split(", ")
-            raise Exception(f"Error: {response.status} {response.reason} - {url}")
+            raise Exception(
+                f"Error: {response.status} {response.reason} - {url}")
 
     async def _get_request(self, url: str, parser: Callable[[dict], dict] = None, exception_type: Exception = CustomException, **kwargs) -> dict:
         """
@@ -463,7 +468,8 @@ class YotpoAPIWrapper:
                 if parser is None:
                     return raw_data
                 return parser(raw_data)
-            raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
+            raise exception_type(
+                f"Error: {response.status} | {response.reason} - {url}")
 
     async def _post_request(self, url: str, data: dict, parser: Callable[[dict], dict] = None, exception_type: Exception = CustomException, **kwargs) -> dict:
         """
@@ -492,7 +498,8 @@ class YotpoAPIWrapper:
                 if parser is None:
                     return raw_data
                 return parser(raw_data)
-            raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
+            raise exception_type(
+                f"Error: {response.status} | {response.reason} - {url}")
 
     async def _pages(self, endpoint: str, start_page: int = 1) -> AsyncGenerator[tuple[str, int], None]:
         """
@@ -535,7 +542,7 @@ class YotpoAPIWrapper:
             Exception: If the request to the user endpoint returns a non-OK status.
         """
         url = self.write_user_endpoint
-        
+
         return await self._get_request(url, parser=lambda data: data['response']['user'])
 
     async def get_app(self) -> dict:
@@ -548,7 +555,7 @@ class YotpoAPIWrapper:
             and updated timestamps, tracking code status, account emails, package details, enabled product
             categories, features usage summary, data for events, category, installed status, organization,
             and associated apps.
-        
+
         Raises:
             AppDataNotFound: If the request to the app endpoint returns a non-OK status.
         """
@@ -578,7 +585,7 @@ class YotpoAPIWrapper:
         app = await self.get_app()
 
         return app['data_for_events']['total_reviews']
-    
+
     async def get_templates(self) -> dict:
         """
         Asynchronously fetch the email templates associated with the Yotpo account.
@@ -615,7 +622,6 @@ class YotpoAPIWrapper:
         templates = app['account_emails']
         return templates
 
-        
     async def fetch_review_page(self, url: str) -> list[dict]:
         """
         Asynchronously fetch a single review page from the specified URL.
@@ -632,7 +638,6 @@ class YotpoAPIWrapper:
         """
         is_widget = "widget" in url
         return await self._get_request(url, parser=lambda data: data['response']['reviews'] if is_widget else data['reviews'])
-
 
     async def fetch_all_reviews(self, published: bool = True) -> list[dict]:
         """
@@ -659,7 +664,7 @@ class YotpoAPIWrapper:
             async for url, _ in self._pages(endpoint):
                 task = asyncio.create_task(self.fetch_review_page(url))
                 review_requests.append(task)
-            
+
             print(f"Gathering {len(review_requests)} review requests from {endpoint}...")
             results = await asyncio.gather(*review_requests, return_exceptions=True)
 
@@ -669,10 +674,9 @@ class YotpoAPIWrapper:
                 # Flatten the list of lists into one big list using itertools.chain
                 results = list(chain.from_iterable(results))
                 reviews.append(results)
-            
+
         return JSONTransformer.merge_on_key("id", *reviews)
 
-        
     async def send_review_request(self, template_id: int | str, csv_stringio: StringIO, spam_check: bool = False):
         """
         Asynchronously send a "manual" review request to Yotpo using a specific email template.
@@ -696,7 +700,7 @@ class YotpoAPIWrapper:
         """
         upload_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/upload_mailing_list"
         send_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/send_burst_email"
-        
+
         upload_response = await self._post_request(upload_url, {"file": csv_stringio, "utoken": self._utoken})
         upload_data = upload_response['response']['response']
 

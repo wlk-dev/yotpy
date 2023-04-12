@@ -21,5 +21,6 @@ env/
 *.bak
 .DS_Store
 
-# Test Scripts
+# Test Files
 test.py
+test.csv
