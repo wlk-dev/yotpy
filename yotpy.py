@@ -2,14 +2,13 @@
 Yotpy: An easy-to-use Python wrapper for the Yotpo web API.
 """
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 import asyncio
 import aiohttp
 from json import loads as json_loads
 from csv import DictWriter
 from io import StringIO
-from requests import post as requests_post
 from typing import AsyncGenerator, Iterator, Union, Optional, Callable, Union
 from html import unescape
 from urllib.parse import urlencode
@@ -255,6 +254,35 @@ class JSONTransformer:
             set[str]: A set of headers.
         """
         return {key for item in json_list for key in item.keys()}
+
+    @staticmethod
+    def from_bigquery_iterator(iterator: Iterator, exclude: set[str] = {}, include: set[str] = {}) -> tuple[set, list]:
+        """
+        Convert a BigQuery RowIterator into a set of headers and a list of rows.
+
+        Args:
+            iterator (Iterator): A BigQuery RowIterator object.
+            exclude (set[str], optional): A set of field names to exclude from the output. Defaults to an empty set.
+            include (set[str], optional): A set of field names to include in the output. If provided, only these fields
+                                          will be included. Defaults to an empty set.
+
+        Returns:
+            tuple[set, list]: A tuple containing a set of headers and a list of rows as dictionaries.
+                              Headers are the field names included in the output, and rows are dictionaries
+                              containing field values for each row in the RowIterator.
+
+        Note:
+            If both `exclude` and `include` are provided, the `include` set takes precedence.
+        """
+        schema = list(iterator.schema)
+        headers = {field.name for field in schema if (include and field.name in include) or (exclude and field.name not in exclude)}
+
+        rows = []
+        for row in iterator:
+            [row.pop(field.name, None) for field in schema if field.name not in headers]
+            rows.append(row)
+
+        return headers, rows
 
     @staticmethod
     def to_rows(json_list: list[dict], sep: str, exclude: list[str] = [], include: list[str] = []) -> tuple[list, set]:
