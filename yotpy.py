@@ -17,6 +17,12 @@ from math import ceil
 from itertools import chain
 
 
+class SessionNotCreatedError(Exception):
+    """Raised when the aiohttp.ClientSession has not been created before making a request."""
+    def __init__(self, message="Session not created. Please use `async with` context manager to make requests."):
+        super().__init__(message)
+
+
 class PreflightException(Exception):
     pass
 
@@ -339,9 +345,8 @@ class YotpoAPIWrapper:
         self.write_user_endpoint = f"https://api-write.yotpo.com/users/me?utoken={self._utoken}"
         self.write_app_endpoint = f"https://api-write.yotpo.com/apps"
 
-        self.aiohttp_session = aiohttp.ClientSession()
-    
     async def __aenter__(self):
+        self.aiohttp_session = aiohttp.ClientSession()
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
@@ -385,6 +390,9 @@ class YotpoAPIWrapper:
         Returns:
             bool: True if the method is allowed, False otherwise.
         """
+        if not hasattr(self, 'aiohttp_session'):
+            raise SessionNotCreatedError()
+
         # Cheeky way to make sure `method` is at least syntactically correct.
         if (method := method.upper()) not in ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE']:
             raise Exception("Invalid HTTP method: ", method)
@@ -412,6 +420,9 @@ class YotpoAPIWrapper:
         Raises:
             exception_type: If the response status is not 200, an instance of the specified exception_type is raised with an error message.
         """
+        if not hasattr(self, 'aiohttp_session'):
+            raise SessionNotCreatedError()
+
         async with self.aiohttp_session.get(url, **kwargs) as response:
             if response.status == 200:
                 return parser(await response.json())
@@ -435,12 +446,13 @@ class YotpoAPIWrapper:
         Raises:
             exception_type: If the response status is not 200, an instance of the specified exception_type is raised with an error message.
         """
+        if not hasattr(self, 'aiohttp_session'):
+            raise SessionNotCreatedError()
 
         async with self.aiohttp_session.post(url, data=data, **kwargs) as response:
             if response.status == 200:
                 return parser(await response.json())
             raise exception_type(f"Error: {response.status} | {response.reason} - {url}")
-
 
     async def _pages(self, endpoint: str, start_page: int = 1) -> AsyncGenerator[tuple[str, int], None]:
         """
@@ -477,8 +489,9 @@ class YotpoAPIWrapper:
         Example:
             ```python
             >>> yotpo = YotpoAPIWrapper(app_key, secret)
-            >>> user_id = (await yotpo.get_user())['id']
-            >>> app = await yotpo.get_app(user_id)
+            >>> async with yotpo as yp:
+            >>>     user_id = (await yp.get_user())['id']
+            >>>     app = await yp.get_app(user_id)
             ```
 
         Raises:
@@ -486,7 +499,7 @@ class YotpoAPIWrapper:
         """
         url = self.write_user_endpoint
         
-        await self._get_request(url, parser=lambda data: data['response']['user'])
+        return await self._get_request(url, parser=lambda data: data['response']['user'])
 
     async def get_app(self, user_id: str | int) -> dict:
         """
@@ -513,7 +526,7 @@ class YotpoAPIWrapper:
 
         url = f"https://api-write.yotpo.com/apps/{self._app_key}?user_id={user_id}&utoken={self._utoken}"
 
-        await self._get_request(url, parser=lambda data: data['response']['app'], exception_type=AppDataNotFound)
+        return await self._get_request(url, parser=lambda data: data['response']['app'], exception_type=AppDataNotFound)
 
     async def get_total_reviews(self) -> int:
         """
