@@ -18,7 +18,10 @@ jobs:
           python-version: '3.11'
 
       - run: pip install aiohttp requests pdoc
-      - run: pdoc --docformat google yotpy.py -o docs/
+      - run: pdoc --docformat google --output-dir docs yotpy
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
 
       - uses: actions/upload-pages-artifact@v1
         with:
