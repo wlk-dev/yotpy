@@ -2,7 +2,7 @@
 Yotpy: An easy-to-use Python wrapper for the Yotpo web API.
 """
 
-__version__ = "0.0.61"
+__version__ = "0.0.62"
 
 import asyncio
 import aiohttp
@@ -17,8 +17,6 @@ from math import ceil
 from itertools import chain
 from .exceptions import CustomException, SessionNotCreatedError, FailedToGetTokenError, PreflightException, UploadException, SendException, UserNotFound, AppNotFound
 
-
-# TODO: Give better error messages for bad requests
 
 class JSONTransformer:
     """
@@ -248,10 +246,9 @@ class JSONTransformer:
 
         rows = []
         for row in iterator:
-            [row.pop(field.name, None)
-             for field in schema if field.name not in headers]
+            row = {field.name : row[field.name] for field in schema if field.name in headers}
             rows.append(row)
-
+        
         return headers, rows
 
     @staticmethod
@@ -373,7 +370,7 @@ class YotpoAPIWrapper:
             str: The user access token.
 
         Raises:
-            Exception: If the response status is not OK (200).
+            FailedToGetTokenError: If the response status is not OK (200).
         """
         url = "https://api.yotpo.com/oauth/token"
         data = {
@@ -423,6 +420,7 @@ class YotpoAPIWrapper:
             dict: The parsed JSON response.
 
         Raises:
+            SessionNotCreatedError: If the aiohttp session has not been created.
             exception_type: If the response status is not 200, an instance of the specified exception_type is raised with an error message.
         """
         if not hasattr(self, 'aiohttp_session'):
@@ -453,6 +451,7 @@ class YotpoAPIWrapper:
             dict: The parsed JSON response.
 
         Raises:
+            SessionNotCreatedError: If the aiohttp session has not been created.
             exception_type: If the response status is not 200, an instance of the specified exception_type is raised with an error message.
         """
         if not hasattr(self, 'aiohttp_session'):
@@ -505,7 +504,7 @@ class YotpoAPIWrapper:
             ```
 
         Raises:
-            Exception: If the request to the user endpoint returns a non-OK status.
+            UserNotFound: If the request to the user endpoint returns a non-OK status.
         """
         url = self.write_user_endpoint
 
@@ -527,9 +526,6 @@ class YotpoAPIWrapper:
         """
         # NOTE: The user_id does not appear to actually matter at all, as it still returns data even if it is not a valid user ID.
         # I suspect `user_id` is just used to track which user is making the request.
-
-        # TODO: If the above is true, we can probably abstract away the `user_id` parameter and just use the user ID from the user endpoint.
-        # And if need be we can add some configuration to allow the user to specify a user ID if they want to.
 
         url = f"https://api-write.yotpo.com/apps/{self._app_key}?user_id={self.user_id}&utoken={self._utoken}"
 
@@ -664,6 +660,7 @@ class YotpoAPIWrapper:
         Raises:
             Exception: If any response status is not 200.
             UploadException: If the uploaded file is not valid.
+            SendException: If the send request fails.
         """
         upload_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/upload_mailing_list"
         send_url = f"{self.write_app_endpoint}/{self._app_key}/account_emails/{template_id}/send_burst_email"
