@@ -1,9 +1,3 @@
-"""
-Yotpy: An easy-to-use Python wrapper for the Yotpo web API.
-"""
-
-__version__ = "0.0.62"
-
 import asyncio
 import aiohttp
 
