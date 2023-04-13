@@ -1,3 +1,6 @@
+"""
+Includes custom exceptions for use with the yotpy package.
+"""
 
 class CustomException(Exception):
     """A custom exception to be used with request processing utility methods."""
