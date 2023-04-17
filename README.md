@@ -9,3 +9,7 @@ Install `yotpy` using pip:
 ```bash
 pip install yotpy
 ```
+
+## Documentation
+
+The current documentation is updated on every update to main and can be found [here](https://wlk-dev.github.io/yotpy/yotpy.html).
