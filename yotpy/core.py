@@ -1,5 +1,5 @@
 """
-Include's the core YotpoAPIWrapper class. As well as the JSONTransformer class, which can be used in tandem to easier convert data for your needs.
+Include's the core YotpoAPIWrapper class. As well as the JSONTransformer class, which can be used in tandem to easily convert data for your needs, or just ignore it.
 """
 
 
