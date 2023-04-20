@@ -285,7 +285,7 @@ class JSONTransformer:
         return rows, headers
 
     @staticmethod
-    def to_csv_stringio(rows: list[dict], headers: set) -> StringIO:
+    def to_csv_stringio(headers: set, rows: list[dict]) -> StringIO:
         """
         Convert a list of rows into a CSV formatted StringIO object.
 
@@ -294,8 +294,8 @@ class JSONTransformer:
         creating an actual file on the filesystem.
 
         Args:
-            rows (list[dict]): A list of rows to convert into a CSV formatted StringIO object.
             headers (set): A set of headers to use for the CSV data.
+            rows (list[dict]): A list of rows to convert into a CSV formatted StringIO object.
 
         Returns:
             StringIO: A CSV formatted StringIO object.
