@@ -241,7 +241,7 @@ class JSONTransformer:
         """
         schema = list(iterator.schema)
         headers = {field.name for field in schema if (
-            include and field.name in include) or (exclude and field.name not in exclude)}
+            include and field.name in include) or (exclude and field.name not in exclude) or (not include and not exclude)}
 
         rows = []
         for row in iterator:
@@ -341,7 +341,7 @@ class JSONTransformer:
 
         # Flush the TextIOWrapper to ensure all data is written to the underlying BytesIO object
         csv_textio.flush()
-        
+
         csv_bytesio = csv_textio.detach()
 
         # Reset the BytesIO object's position to the beginning
