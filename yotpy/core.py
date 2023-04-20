@@ -342,6 +342,9 @@ class JSONTransformer:
         # Flush the TextIOWrapper to ensure all data is written to the underlying BytesIO object
         csv_textio.flush()
 
+        # Detach the TextIOWrapper from the BytesIO object to prevent closing it
+        csv_textio.detach()
+
         # Reset the BytesIO object's position to the beginning
         csv_bytesio.seek(0)
 
