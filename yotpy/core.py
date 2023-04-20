@@ -8,7 +8,7 @@ import aiohttp
 
 from json import loads as json_loads
 from csv import DictWriter
-from io import StringIO, BytesIO
+from io import StringIO, BytesIO, TextIOWrapper
 from typing import AsyncGenerator, Iterator, Union, Optional, Callable, Union
 from html import unescape
 from urllib.parse import urlencode
@@ -330,17 +330,22 @@ class JSONTransformer:
         """
         # Create a BytesIO object to write the CSV data to.
         csv_bytesio = BytesIO()
-        # Create a csv writer and write the rows to the BytesIO object.
-        writer = DictWriter(csv_bytesio, fieldnames=headers)
+        
+        # Wrap the BytesIO object with a TextIOWrapper using utf-8-sig encoding.
+        csv_textio = TextIOWrapper(csv_bytesio, encoding='utf-8-sig')
+
+        # Create a csv writer and write the rows to the wrapped BytesIO object.
+        writer = DictWriter(csv_textio, fieldnames=headers)
         writer.writeheader()
         writer.writerows(rows)
+
+        # Flush the TextIOWrapper to ensure all data is written to the underlying BytesIO object
+        csv_textio.flush()
 
         # Reset the BytesIO object's position to the beginning
         csv_bytesio.seek(0)
 
         return csv_bytesio
-
-    # NOTE: If you need to add another in-memory file format, maybe just refactor the above methods into a single method that accepts a memory buffer object.
 
 class YotpoAPIWrapper:
     # NOTE: Update docstring if more methods are added to account for any added functionality outside of the defined scope.
