@@ -285,7 +285,7 @@ class JSONTransformer:
         return rows, headers
 
     @staticmethod
-    def to_csv_stringio(headers: set, rows: list[dict]) -> StringIO:
+    def to_csv_stringio(headers: set, rows: list[dict], delimiter=',') -> StringIO:
         """
         Convert a list of rows into a CSV formatted StringIO object.
 
@@ -296,6 +296,7 @@ class JSONTransformer:
         Args:
             headers (set): A set of headers to use for the CSV data.
             rows (list[dict]): A list of rows to convert into a CSV formatted StringIO object.
+            delimiter (str, optional): The delimiter to use for the CSV data. Defaults to ','.
 
         Returns:
             StringIO: A CSV formatted StringIO object.
@@ -303,7 +304,7 @@ class JSONTransformer:
         # Create a StringIO object to write the CSV data to.
         csv_stringio = StringIO()
         # Create a csv writer and write the rows to the StringIO object.
-        writer = DictWriter(csv_stringio, fieldnames=headers)
+        writer = DictWriter(csv_stringio, fieldnames=headers, delimiter=delimiter)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -313,7 +314,7 @@ class JSONTransformer:
         return csv_stringio
 
     @staticmethod
-    def to_csv_bytesio(headers: set, rows: list[dict]) -> BytesIO:
+    def to_csv_bytesio(headers: set, rows: list[dict], delimiter=',') -> BytesIO:
         """
         Convert a list of rows into a CSV formatted BytesIO object.
 
@@ -324,6 +325,7 @@ class JSONTransformer:
         Args:
             headers (set): A set of headers to use for the CSV data.
             rows (list[dict]): A list of rows to convert into a CSV formatted BytesIO object.
+            delimiter (str, optional): The delimiter to use for the CSV data. Defaults to ','.
 
         Returns:
             BytesIO: A CSV formatted BytesIO object.
@@ -335,7 +337,7 @@ class JSONTransformer:
         csv_textio = TextIOWrapper(csv_bytesio, encoding='utf-8-sig')
 
         # Create a csv writer and write the rows to the wrapped BytesIO object.
-        writer = DictWriter(csv_textio, fieldnames=headers)
+        writer = DictWriter(csv_textio, fieldnames=headers, delimiter=delimiter)
         writer.writeheader()
         writer.writerows(rows)
 
