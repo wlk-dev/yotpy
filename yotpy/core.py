@@ -8,6 +8,7 @@ import aiohttp
 
 from json import loads as json_loads
 from csv import DictWriter
+from openpyxl import Workbook
 from io import StringIO, BytesIO, TextIOWrapper
 from typing import AsyncGenerator, Iterator, Union, Optional, Callable, Union
 from html import unescape
@@ -350,6 +351,43 @@ class JSONTransformer:
         csv_bytesio.seek(0)
 
         return csv_bytesio
+
+    @staticmethod
+    def to_xlsx_bytesio(headers: set, rows: list[dict]) -> BytesIO:
+        """
+        Convert a list of rows into a Excel formatted BytesIO object.
+
+        This method takes a list of rows (dictionaries) and a set of headers, and writes them into
+        an Excel formatted BytesIO object. It can be used to create an Excel file-like object without
+        creating an actual file on the filesystem.
+
+        Args:
+            headers (set): A set of headers to use for the Excel data.
+            rows (list[dict]): A list of rows to convert into an Excel formatted BytesIO object.
+
+        Returns:
+            BytesIO: An Excel formatted BytesIO object.
+        """
+        # Create a Workbook object
+        wb = Workbook()
+        ws = wb.active
+
+        # Write headers
+        ws.append(list(headers))
+
+        # Write rows
+        for row in rows:
+            ws.append([row[h] for h in headers])
+
+        # Save workbook to a BytesIO object
+        xlsx_bytesio = BytesIO()
+        wb.save(xlsx_bytesio)
+
+        # Reset the BytesIO object's position to the beginning
+        xlsx_bytesio.seek(0)
+
+        return xlsx_bytesio
+
 
 class YotpoAPIWrapper:
     # NOTE: Update docstring if more methods are added to account for any added functionality outside of the defined scope.
