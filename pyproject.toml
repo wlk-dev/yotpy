@@ -19,6 +19,7 @@ classifiers = [
 requires = [
     "aiohttp",
     "requests",
+    "openpyxl",
 ]
 keywords = "yotpo, api, wrapper, python, data, transformation, client, integration, review, ecommerce"
 
