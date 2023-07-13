@@ -35,7 +35,7 @@ class JSONTransformer:
             Input JSON:
             ```python
             json = \\
-            { "a": 
+            { "a":
                 { "b":
                     [ { "c": "d" }, { "e": [1,2,3] } ]
                 },
@@ -123,7 +123,7 @@ class JSONTransformer:
         Example:
             Input JSON:
             ```python
-            json = { "a": 
+            json = { "a":
                 { "b":
                     [ { "c": "d" }, { "e": [1,2,3] } ]
                 },
@@ -173,7 +173,7 @@ class JSONTransformer:
         Flattens a list of JSON objects into a list of dictionaries with flattened keys.
 
         This method takes a list of nested JSON objects and converts each JSON object into a
-        dictionary with keys representing the nested structure using a specified separator. 
+        dictionary with keys representing the nested structure using a specified separator.
         Optionally, you can provide a list of keys to exclude or include in the resulting dictionaries.
 
         Example:
@@ -246,9 +246,10 @@ class JSONTransformer:
 
         rows = []
         for row in iterator:
-            row = {field.name : row[field.name] for field in schema if field.name in headers}
+            row = {field.name: row[field.name]
+                   for field in schema if field.name in headers}
             rows.append(row)
-        
+
         return headers, rows
 
     @staticmethod
@@ -257,7 +258,7 @@ class JSONTransformer:
         Flatten a list of JSON objects into a list of rows and a set of headers.
 
         This method takes a list of nested JSON objects and converts each JSON object into a
-        dictionary with keys representing the nested structure using a specified separator. 
+        dictionary with keys representing the nested structure using a specified separator.
         It then creates a list of rows, where each row contains the values from the flattened
         dictionaries, and a set of headers representing the unique keys of the flattened dictionaries.
 
@@ -305,7 +306,8 @@ class JSONTransformer:
         # Create a StringIO object to write the CSV data to.
         csv_stringio = StringIO()
         # Create a csv writer and write the rows to the StringIO object.
-        writer = DictWriter(csv_stringio, fieldnames=headers, delimiter=delimiter)
+        writer = DictWriter(
+            csv_stringio, fieldnames=headers, delimiter=delimiter)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -333,12 +335,13 @@ class JSONTransformer:
         """
         # Create a BytesIO object to write the CSV data to.
         csv_bytesio = BytesIO()
-        
+
         # Wrap the BytesIO object with a TextIOWrapper using utf-8-sig encoding.
         csv_textio = TextIOWrapper(csv_bytesio, encoding='utf-8-sig')
 
         # Create a csv writer and write the rows to the wrapped BytesIO object.
-        writer = DictWriter(csv_textio, fieldnames=headers, delimiter=delimiter)
+        writer = DictWriter(csv_textio, fieldnames=headers,
+                            delimiter=delimiter)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -353,7 +356,7 @@ class JSONTransformer:
         return csv_bytesio
 
     @staticmethod
-    def to_xlsx_bytesio(headers: set, rows: list[dict]) -> BytesIO:
+    def to_xlsx_bytesio(headers: set, rows: list[dict], helper: bool = False) -> BytesIO:
         """
         Convert a list of rows into a Excel formatted BytesIO object.
 
@@ -364,10 +367,21 @@ class JSONTransformer:
         Args:
             headers (set): A set of headers to use for the Excel data.
             rows (list[dict]): A list of rows to convert into an Excel formatted BytesIO object.
+            helper (bool, optional): If True, enables automatic parsing and filling of unformatted data. Defaults to False.
 
         Returns:
             BytesIO: An Excel formatted BytesIO object.
         """
+
+        # Helper function used to parse a usable value when a value error is throw.
+        def value_parser(value, header):
+            if isinstance(value, list | set):
+                return value.pop() if len(value) else ""
+            elif isinstance(value, tuple):
+                return value[0] if len(value) else ""
+            elif isinstance(value, dict):
+                return value.get(header, "")
+
         # Create a Workbook object
         wb = Workbook()
         ws = wb.active
@@ -377,7 +391,11 @@ class JSONTransformer:
 
         # Write rows
         for row in rows:
-            ws.append([row[h] for h in headers])
+            for header in headers:
+                try:
+                    ws.append(row[header])
+                except ValueError:
+                    ws.append(value_parser(row[header], header))
 
         # Save workbook to a BytesIO object
         xlsx_bytesio = BytesIO()
