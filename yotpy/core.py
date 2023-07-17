@@ -356,32 +356,18 @@ class JSONTransformer:
         return csv_bytesio
 
     @staticmethod
-    def to_xlsx_bytesio(headers: set, rows: list[dict], helper: bool = False) -> BytesIO:
+    def to_xlsx_bytesio(headers: set, rows: list[dict]) -> BytesIO:
         """
         Convert a list of rows into a Excel formatted BytesIO object.
-
         This method takes a list of rows (dictionaries) and a set of headers, and writes them into
         an Excel formatted BytesIO object. It can be used to create an Excel file-like object without
         creating an actual file on the filesystem.
-
         Args:
             headers (set): A set of headers to use for the Excel data.
             rows (list[dict]): A list of rows to convert into an Excel formatted BytesIO object.
-            helper (bool, optional): If True, enables automatic parsing and filling of unformatted data. Defaults to False.
-
         Returns:
             BytesIO: An Excel formatted BytesIO object.
         """
-
-        # Helper function used to parse a usable value when a value error is throw.
-        def value_parser(value, header):
-            if isinstance(value, list | set):
-                return value.pop() if len(value) else ""
-            elif isinstance(value, tuple):
-                return value[0] if len(value) else ""
-            elif isinstance(value, dict):
-                return value.get(header, "")
-
         # Create a Workbook object
         wb = Workbook()
         ws = wb.active
@@ -389,13 +375,17 @@ class JSONTransformer:
         # Write headers
         ws.append(list(headers))
 
+        def retrv(obj):
+            if hasattr(obj, 'pop') and len(obj) == 1:
+                return obj.pop()
+            elif isinstance(obj, set):
+                return ';'.join(obj)
+            else:
+                return obj
+
         # Write rows
         for row in rows:
-            for header in headers:
-                try:
-                    ws.append(row[header])
-                except ValueError:
-                    ws.append(value_parser(row[header], header))
+            ws.append([retrv(row[h]) for h in headers])
 
         # Save workbook to a BytesIO object
         xlsx_bytesio = BytesIO()
@@ -405,6 +395,7 @@ class JSONTransformer:
         xlsx_bytesio.seek(0)
 
         return xlsx_bytesio
+
 
 
 class YotpoAPIWrapper:
