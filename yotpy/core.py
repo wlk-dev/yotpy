@@ -60,10 +60,16 @@ class JSONTransformer:
 
         Returns:
             Iterator[dict[str, Union[tuple | str]]]: An iterator that yields dictionaries with the current key "directory" and its associated value.
+        
+        Raises:
+            TypeError: If the provided JSON object is not a dictionary.
 
         Note:
             Tuples have been used instead of lists for the keys argument, for performance at the cost of readability of this function.
         """
+        if not isinstance(json, dict):
+            raise TypeError(
+                f"JSONTransformer.stream_json_data() requires a dictionary, received {type(json)}")
 
         for key, value in json.items():
             if isinstance(value, dict):
