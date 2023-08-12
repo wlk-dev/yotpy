@@ -95,7 +95,25 @@ class JSONTransformer:
     @staticmethod
     def merge_on_key(key: str, list_1: list[dict], list_2: list[dict]) -> list[dict]:
         """
-        Merges two lists of dictionaries into a single list, based on matching dictionary keys.
+        Merges two lists of dictionaries into a single list, based on a matching dictionary key-value.
+
+        Example:
+            ```python
+            list_1 = [
+                {"id": 1, "name": "John"},
+                {"id": 2, "name": "Jane"}
+            ]
+            list_2 = [
+                {"id": 1, "age": 25},
+                {"id": 2, "age": 30}
+            ]
+            # Merging on the "id" key:
+            >>> print(JSONTransformer.merge_on_key("id", list_1, list_2))
+            >>> [
+            >>>     {"id": 1, "name": "John", "age": 25},
+            >>>     {"id": 2, "name": "Jane", "age": 30}
+            >>> ]
+            ```
 
         Args:
             key (str): The key to match the dictionaries on.
@@ -103,18 +121,20 @@ class JSONTransformer:
             list_2 (list[dict]): The second list of dictionaries.
 
         Returns:
-            list[dict]: A merged list of dictionaries containing merged disctionaries based on matching keys from both input lists.
+            list[dict]: A merged list of dictionaries containing merged dictionaries based on matching keys from both input lists.
         """
         if not list_1 or not list_2:
             raise Exception(
                 f"Cannot merge empty list(s).\nlist_1: length={len(list_1)}\nlist_2: length={len(list_2)}")
+        
+        can_merge = lambda item_1, item_2: (val_1 := item_1.get(key, None)) == (val_2 := item_2.get(key, None)) and not (val_1 is None and val_2 is None)
 
         # Use list comprehension to merge dictionaries that have matching keys
         return [
             dict(item_1, **item_2)
             for item_1 in list_1
             for item_2 in list_2
-            if item_1.get(key, 0) == item_2.get(key, 1)
+            if can_merge(item_1, item_2)
         ]
 
     @staticmethod
